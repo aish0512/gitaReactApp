@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "816437624261",
+    "project_id": "gitalogin-4fe8c",
+    "storage_bucket": "gitalogin-4fe8c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:816437624261:android:704fdef9239c76b54b1fac",
+        "android_client_info": {
+          "package_name": "com.gitareactapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "816437624261-cdttpvt44crfuj6riv54h7c5v6dcf4lj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gitareactapp",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "816437624261-kegltatut9d6jv9sb6me72r80338un7f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBuaGvrf_o1EtMxBkXdUeFyX2Un742QOMY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "816437624261-kegltatut9d6jv9sb6me72r80338un7f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -4,6 +4,9 @@
   "description": "This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).",
   "main": "index.js",
   "dependencies": {
+    "@react-native-firebase/app": "^20.1.0",
+    "@react-native-firebase/auth": "^20.1.0",
+    "@react-native-google-signin/google-signin": "^11.0.1",
     "@react-native/metro-config": "^0.73.5",
     "@react-navigation/native": "^6.1.15",
     "@react-navigation/native-stack": "^6.9.24",
@@ -627,5 +630,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "flipper-pkg": "^0.212.0"
+  }
 }
