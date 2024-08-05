@@ -32,7 +32,7 @@ const LoginScreen = ({ navigation }) => {
         const { idToken, user } = await GoogleSignin.signIn();
         console.log(user)
         Alert.alert("success")
-        navigation.replace('HomeScreen');
+        navigation.replace('Home');
         // Create a Google credential with the token
         const googleCredential = auth.GoogleAuthProvider.credential(idToken);
         
