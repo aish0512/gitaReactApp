@@ -1,4 +1,3 @@
-// HomeScreen.js
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image, Alert } from 'react-native';
 import { GiftedChat, Time, Bubble } from 'react-native-gifted-chat';
@@ -11,40 +10,21 @@ import firestore from '@react-native-firebase/firestore';
 export default function HomeScreen() {
   const navigation = useNavigation();
   const [messages, setMessages] = useState([]);
-   const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [chapterVerses, setChapterVerses] = useState([]);
   const [showLogoGreetings, setShowLogoGreetings] = useState(true);
 
   useEffect(() => {
-    const loadMessages = async () => {
-      const userId = auth().currentUser.uid;
-      const userMessagesRef = firestore()
-        .collection('users')
-        .doc(userId)
-        .collection('messages')
-        .orderBy('createdAt', 'desc');
+    // const loadMessages = async () => {
+    //   const userId = auth().currentUser.uid;
+    //   const userMessagesRef = firestore().collection('users').doc(userId).collection('messages');
+    //   const snapshot = await userMessagesRef.orderBy('createdAt').get();
+    //   const messages = snapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
+    //   setMessages(messages);
+    // };
 
-      const unsubscribe = userMessagesRef.onSnapshot(snapshot => {
-        const messages = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            _id: doc.id,
-            ...data,
-            createdAt: data.createdAt.toDate(),
-          };
-        });
-        setMessages(messages);
-        if (messages.length === 0) {
-            setShowLogoGreetings(true);
-        } else {
-            setShowLogoGreetings(false); // Hide greetings if there are messages
-        }
-      });
-
-      return () => unsubscribe(); // Unsubscribe from the listener when the component unmounts
-   };
     GoogleSignin.configure({
       webClientId: '816437624261-kegltatut9d6jv9sb6me72r80338un7f.apps.googleusercontent.com',
     });
@@ -72,7 +52,7 @@ export default function HomeScreen() {
       _id: Math.random().toString(36).substring(7),
       text: inputMessage,
       createdAt: new Date(),
-      user: { _id: 1, name: 'User'},
+      user: { _id: userId },
     };
     setMessages(previousMessages => GiftedChat.append(previousMessages, [message]));
     setInputMessage('');
@@ -108,7 +88,7 @@ export default function HomeScreen() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_message: inputMessage,
-          bot_response: botMessage.text
+          bot_response: botMessage.text,
         }),
       });
     } catch (error) {
@@ -124,8 +104,7 @@ export default function HomeScreen() {
   };
 
   const handleReferencePress = (reference) => {
-    const sloka_id = reference;
-    navigation.navigate('Sloka', { sloka_id });
+    navigation.navigate('Sloka', { sloka_id: reference });
   };
 
   const signOut = async () => {
@@ -135,6 +114,7 @@ export default function HomeScreen() {
         await GoogleSignin.revokeAccess();
         await GoogleSignin.signOut();
         await auth().signOut();
+        setMessages([]);
         Alert.alert('Signed out');
         navigation.replace('Login');
       } else {
@@ -146,39 +126,33 @@ export default function HomeScreen() {
   };
 
   const renderBubble = (props) => {
-    const { currentMessage } = props;
-
-    // Check if the message is from the bot
-    const isBotMessage = currentMessage.user._id === 2;
-
+    console.log('Bubble props:', props);
     return (
-        <Bubble
-            {...props}
-            wrapperStyle={{
-                left: isBotMessage ? styles.botMessage : styles.userMessage,
-                right: isBotMessage ? styles.userMessage : styles.userMessage,
-            }}
-            textStyle={{
-                left: isBotMessage ? styles.botMessageText : styles.userMessageText,
-                right: isBotMessage ? styles.userMessageText : styles.userMessageText,
-            }}
-        >
-            {isBotMessage && (
-                <View style={styles.botMessage}>
-                    <Image
-                        source={require('./assets/orange_logo.png')} // Path to your logo
-                        style={styles.botImage}
-                    />
-                    <Text style={styles.botMessageText}>{currentMessage.text}</Text>
-                </View>
-            )}
-        </Bubble>
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          left: {
+            backgroundColor: '#FFE9D4',
+          },
+          right: {
+            backgroundColor: '#449afb',
+          },
+        }}
+        textStyle={{
+          left: {
+            color: '#000000',
+          },
+          right: {
+            color: '#FFFFFF',
+          },
+        }}
+      />
     );
-};
-  
+  };
+
   return (
     <View style={styles.container}>
-      {showLogoGreetings && (
+      {/* {showLogoGreetings && (
         <View style={styles.fullScreenCenter}>
           <Image
             source={require('./assets/g_logo.png')}
@@ -191,11 +165,11 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
-      )}
+      )} */}
       <GiftedChat
         messages={messages}
         onSend={messages => setMessages(previousMessages => GiftedChat.append(previousMessages, messages))}
-        user={{ _id: 1 }}
+        user={{ _id: 1,  name: 'User' }}
         renderInputToolbar={() => null}
         renderBubble={renderBubble}
         renderTime={(timeProps) => (
@@ -203,7 +177,7 @@ export default function HomeScreen() {
             {...timeProps}
             timeTextStyle={{
               left: { color: '#000' },
-              right: { color: '#000' }
+              right: { color: '#000' },
             }}
           />
         )}
@@ -213,12 +187,14 @@ export default function HomeScreen() {
         <View style={styles.suggestionsContainer}>
           <TouchableOpacity
             onPress={() => handleSuggestionPress('What is the purpose of life?')}
-            style={styles.suggestionButton}>
+            style={styles.suggestionButton}
+          >
             <Text style={styles.suggestionButtonText}>What is the purpose of life?</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => handleSuggestionPress('Who is Krishna?')}
-            style={styles.suggestionButton}>
+            style={styles.suggestionButton}
+          >
             <Text style={styles.suggestionButtonText}>Who is Krishna?</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={signOut} style={styles.suggestionButton}>
@@ -232,7 +208,8 @@ export default function HomeScreen() {
             <TouchableOpacity
               key={index}
               onPress={() => handleReferencePress(reference)}
-              style={[styles.suggestionButton, { margin: 5 }]}>
+              style={[styles.suggestionButton, { margin: 5 }]}
+            >
               <Text style={styles.suggestionButtonText}>{reference}</Text>
             </TouchableOpacity>
           ))}
@@ -248,7 +225,7 @@ export default function HomeScreen() {
             setChapterVerses([]);
             setShowLogoGreetings(false);
           }}
-          placeholder="Type here.."
+          placeholder="Type here..."
           editable={!isLoading}
         />
         {isLoading ? (
@@ -295,26 +272,24 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   botMessage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    // alignSelf: 'flex-start',
     backgroundColor: '#FFE9D4',
     borderRadius: 20,
     borderBottomLeftRadius: 0,
     padding: 10,
     marginVertical: 5,
   },
+  botMessageText: {
+    color: '#000',
+  },
   greetingsMsg: {
     paddingHorizontal: 30,
     paddingVertical: 5,
   },
-  botImage: {
-    width: 40,
-    height: 40,
-    marginRight: 10,
-  },
   logo: {
-    marginBottom: '5px',
+    marginBottom: 5,
   },
   userMessageText: {
     color: '#000',
