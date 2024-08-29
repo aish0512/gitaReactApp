@@ -1,4 +1,125 @@
-// HomeScreen.js
+// // HomeScreen.js
+// import React, { useState, useEffect } from 'react';
+// import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image, Alert } from 'react-native';
+// import { GiftedChat, Time, Bubble } from 'react-native-gifted-chat';
+// import BootSplash from 'react-native-bootsplash';
+// import { useNavigation } from '@react-navigation/native';
+// import auth from '@react-native-firebase/auth';
+// import { GoogleSignin } from '@react-native-google-signin/google-signin';
+// import firestore from '@react-native-firebase/firestore';
+
+// export default function HomeScreen() {
+//   const navigation = useNavigation();
+//   const [messages, setMessages] = useState([]);
+//    const [inputMessage, setInputMessage] = useState('');
+//   const [showSuggestions, setShowSuggestions] = useState(true);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [chapterVerses, setChapterVerses] = useState([]);
+
+//   useEffect(() => {
+//     const loadMessages = async () => {
+//       const userId = auth().currentUser.uid;
+//       const userMessagesRef = firestore()
+//         .collection('users')
+//         .doc(userId)
+//         .collection('messages')
+//         .orderBy('createdAt', 'desc');
+
+//       const unsubscribe = userMessagesRef.onSnapshot(snapshot => {
+//         const messages = snapshot.docs.map(doc => {
+//           const data = doc.data();
+//           return {
+//             _id: doc.id,
+//             ...data,
+//             createdAt: data.createdAt.toDate(),
+//           };
+//         });
+//         setMessages(messages.length === 0 ? [{
+//           _id: 1,
+//           text: "What life questions can I assist you with today?",
+//           createdAt: new Date(),
+//           user: {
+//             _id: 2,
+//             name: "Gita Bot",
+//             avatar: require('./assets/orange_logo.png'),
+//           },
+//         }] : messages);
+//       });
+
+//       return () => unsubscribe(); // Unsubscribe from the listener when the component unmounts
+//    };
+//     GoogleSignin.configure({
+//       webClientId: '816437624261-kegltatut9d6jv9sb6me72r80338un7f.apps.googleusercontent.com',
+//     });
+
+//     const init = async () => {
+//       if (auth().currentUser) {
+//         await loadMessages();
+//       }
+//     };
+//     init().finally(async () => {
+//       await BootSplash.hide({ fade: true });
+//       console.log('BootSplash has been hidden successfully');
+//     });
+//   }, []);
+
+//   const sendMessage = async () => {
+//     const trimmedMessage = inputMessage.trim();
+//     if (!trimmedMessage) {
+//       console.log('Cannot send empty message.');
+//       return;
+//     }
+//     setIsLoading(true);
+//     const userId = auth().currentUser.uid;
+//     const message = {
+//       _id: Math.random().toString(36).substring(7),
+//       text: inputMessage,
+//       createdAt: new Date(),
+//       user: { _id: 1, name: 'User'},
+//     };
+//     setMessages(previousMessages => GiftedChat.append(previousMessages, [message]));
+//     setInputMessage('');
+//     setShowSuggestions(false);
+
+//     try {
+//       const response = await fetch('https://gita-chat-beta2.azurewebsites.net/api/gita_assistant_v1', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ prompt: inputMessage }),
+//       });
+//       const data = await response.json();
+//       const botMessage = {
+//         _id: Math.random().toString(36).substring(7),
+//         text: data.trim(),
+//         createdAt: new Date(),
+//         user: { _id: 2, name: 'Bot', avatar: require('./assets/orange_logo.png') },
+//       };
+//       setMessages(previousMessages => GiftedChat.append(previousMessages, [botMessage]));
+
+//       // Save messages to Firestore
+//       const userMessagesRef = firestore().collection('users').doc(userId).collection('messages');
+//       await userMessagesRef.add(message);
+//       await userMessagesRef.add(botMessage);
+
+//       const regex = /Chapter \d+, Verse \d+/g;
+//       const found = data.match(regex) || [];
+//       setChapterVerses(found);
+
+//       await fetch('https://getgitadata.azurewebsites.net/api/storeDataDB?', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({
+//           user_message: inputMessage,
+//           bot_response: botMessage.text
+//         }),
+//       });
+//     } catch (error) {
+//       console.error('Error fetching data: ', error);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image, Alert } from 'react-native';
 import { GiftedChat, Time, Bubble } from 'react-native-gifted-chat';
@@ -11,55 +132,67 @@ import firestore from '@react-native-firebase/firestore';
 export default function HomeScreen() {
   const navigation = useNavigation();
   const [messages, setMessages] = useState([]);
-   const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [chapterVerses, setChapterVerses] = useState([]);
-  const [showLogoGreetings, setShowLogoGreetings] = useState(true);
 
-  useEffect(() => {
-    const loadMessages = async () => {
-      const userId = auth().currentUser.uid;
-      const userMessagesRef = firestore()
-        .collection('users')
-        .doc(userId)
-        .collection('messages')
-        .orderBy('createdAt', 'desc');
+  const loadMessages = async () => {
+    const userId = auth().currentUser?.uid;
+    if (!userId) {
+      console.log('No user logged in');
+      return;
+    }
 
-      const unsubscribe = userMessagesRef.onSnapshot(snapshot => {
-        const messages = snapshot.docs.map(doc => {
+    const userMessagesRef = firestore()
+      .collection('users')
+      .doc(userId)
+      .collection('messages')
+      .orderBy('createdAt', 'desc');
+  
+    try {
+      const snapshot = await userMessagesRef.get();
+      if (snapshot.empty) {
+        setMessages([{
+          _id: 1,
+          text: "How can I assist you?",
+          createdAt: new Date(),
+          user: {
+            _id: 2,
+            name: "Bot",
+            avatar: require('./assets/orange_logo.png'),
+          },
+        }]);
+      } else {
+        const fetchedMessages = snapshot.docs.map(doc => {
           const data = doc.data();
           return {
             _id: doc.id,
-            ...data,
+            text: data.text,
             createdAt: data.createdAt.toDate(),
+            user: data.user,
           };
         });
-        setMessages(messages);
-        if (messages.length === 0) {
-            setShowLogoGreetings(true);
-        } else {
-            setShowLogoGreetings(false); // Hide greetings if there are messages
-        }
-      });
-
-      return () => unsubscribe(); // Unsubscribe from the listener when the component unmounts
-   };
-    GoogleSignin.configure({
-      webClientId: '816437624261-kegltatut9d6jv9sb6me72r80338un7f.apps.googleusercontent.com',
-    });
-
-    const init = async () => {
-      if (auth().currentUser) {
-        await loadMessages();
+        setMessages(fetchedMessages);
       }
-    };
-    init().finally(async () => {
-      await BootSplash.hide({ fade: true });
-      console.log('BootSplash has been hidden successfully');
+    } catch (error) {
+      console.error("Error loading messages: ", error);
+    }
+  };
+  
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(user => {
+      if (user) {
+        loadMessages();
+      } else {
+        setMessages([]);
+      }
     });
-  }, []);
 
+    return () => unsubscribe();
+  }, []);
+  
+  
   const sendMessage = async () => {
     const trimmedMessage = inputMessage.trim();
     if (!trimmedMessage) {
@@ -77,7 +210,6 @@ export default function HomeScreen() {
     setMessages(previousMessages => GiftedChat.append(previousMessages, [message]));
     setInputMessage('');
     setShowSuggestions(false);
-    setShowLogoGreetings(false);
 
     try {
       const response = await fetch('https://gita-chat-beta2.azurewebsites.net/api/gita_assistant_v1', {
@@ -117,7 +249,6 @@ export default function HomeScreen() {
       setIsLoading(false);
     }
   };
-
   const handleSuggestionPress = (suggestion) => {
     setInputMessage(suggestion);
     setShowSuggestions(false);
@@ -128,70 +259,57 @@ export default function HomeScreen() {
     navigation.navigate('Sloka', { sloka_id });
   };
 
-  const signOut = async () => {
-    try {
-      const isSignedIn = await GoogleSignin.isSignedIn();
-      if (isSignedIn) {
-        await GoogleSignin.revokeAccess();
-        await GoogleSignin.signOut();
-        await auth().signOut();
-        Alert.alert('Signed out');
-        navigation.replace('Login');
-      } else {
-        Alert.alert('You are not signed in');
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  // const signOut = async () => {
+  //   try {
+  //     const isSignedIn = await GoogleSignin.isSignedIn();
+  //     if (isSignedIn) {
+  //       await GoogleSignin.revokeAccess();
+  //       await GoogleSignin.signOut();
+  //       await auth().signOut();
+  //       // Alert.alert('Signed out');
+  //       navigation.replace('Login');
+  //     } else {
+  //       Alert.alert('You are not signed in');
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
 
   const renderBubble = (props) => {
     const { currentMessage } = props;
-
-    // Check if the message is from the bot
     const isBotMessage = currentMessage.user._id === 2;
 
     return (
-        <Bubble
-            {...props}
-            wrapperStyle={{
-                left: isBotMessage ? styles.botMessage : styles.userMessage,
-                right: isBotMessage ? styles.userMessage : styles.userMessage,
-            }}
-            textStyle={{
-                left: isBotMessage ? styles.botMessageText : styles.userMessageText,
-                right: isBotMessage ? styles.userMessageText : styles.userMessageText,
-            }}
-        >
-            {isBotMessage && (
-                <View style={styles.botMessage}>
-                    <Image
-                        source={require('./assets/orange_logo.png')} // Path to your logo
-                        style={styles.botImage}
-                    />
-                    <Text style={styles.botMessageText}>{currentMessage.text}</Text>
-                </View>
-            )}
-        </Bubble>
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          left: isBotMessage ? styles.botMessage : styles.userMessage,
+          right: isBotMessage ? styles.userMessage : styles.userMessage,
+        }}
+        textStyle={{
+          left: isBotMessage ? styles.botMessageText : styles.userMessageText,
+          right: isBotMessage ? styles.userMessageText : styles.userMessageText,
+        }}
+      >
+        <View style={isBotMessage ? styles.botMessage : styles.userMessage}>
+          {isBotMessage && (
+            <Image
+              source={require('./assets/orange_logo.png')}
+              style={styles.botImage}
+            />
+          )}
+          <Text style={isBotMessage ? styles.botMessageText : styles.userMessageText}>
+            {currentMessage.text}
+          </Text>
+        </View>
+      </Bubble>
     );
-};
+  };
+
   
   return (
     <View style={styles.container}>
-      {showLogoGreetings && (
-        <View style={styles.fullScreenCenter}>
-          <Image
-            source={require('./assets/g_logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <View style={styles.greetingsMsg}>
-            <Text style={styles.greetingsText}>
-              "Greetings, seeker of wisdom. You've entered a realm where ancient knowledge meets modern dilemmas. Inspired by the profound teachings of the Bhagavad Gita, I'm here to help you reflect, understand, and find peace in your answers."
-            </Text>
-          </View>
-        </View>
-      )}
       <GiftedChat
         messages={messages}
         onSend={messages => setMessages(previousMessages => GiftedChat.append(previousMessages, messages))}
@@ -221,9 +339,6 @@ export default function HomeScreen() {
             style={styles.suggestionButton}>
             <Text style={styles.suggestionButtonText}>Who is Krishna?</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={signOut} style={styles.suggestionButton}>
-            <Text style={styles.suggestionButtonText}>Sign out</Text>
-          </TouchableOpacity>
         </View>
       )}
       {chapterVerses.length > 0 && (
@@ -246,7 +361,6 @@ export default function HomeScreen() {
             setInputMessage(text);
             setShowSuggestions(false);
             setChapterVerses([]);
-            setShowLogoGreetings(false);
           }}
           placeholder="Type here.."
           editable={!isLoading}

@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "816437624261-6p70mni64501fo8c9ktap17ftpdkv5o6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gitareactapp",
+            "certificate_hash": "7e3aa034fe331808a15e99d4dc05f40bdb5ef4bd"
+          }
+        },
+        {
           "client_id": "816437624261-cdttpvt44crfuj6riv54h7c5v6dcf4lj.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
