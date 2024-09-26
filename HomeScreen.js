@@ -1,128 +1,6 @@
-// // HomeScreen.js
-// import React, { useState, useEffect } from 'react';
-// import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image, Alert } from 'react-native';
-// import { GiftedChat, Time, Bubble } from 'react-native-gifted-chat';
-// import BootSplash from 'react-native-bootsplash';
-// import { useNavigation } from '@react-navigation/native';
-// import auth from '@react-native-firebase/auth';
-// import { GoogleSignin } from '@react-native-google-signin/google-signin';
-// import firestore from '@react-native-firebase/firestore';
-
-// export default function HomeScreen() {
-//   const navigation = useNavigation();
-//   const [messages, setMessages] = useState([]);
-//    const [inputMessage, setInputMessage] = useState('');
-//   const [showSuggestions, setShowSuggestions] = useState(true);
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [chapterVerses, setChapterVerses] = useState([]);
-
-//   useEffect(() => {
-//     const loadMessages = async () => {
-//       const userId = auth().currentUser.uid;
-//       const userMessagesRef = firestore()
-//         .collection('users')
-//         .doc(userId)
-//         .collection('messages')
-//         .orderBy('createdAt', 'desc');
-
-//       const unsubscribe = userMessagesRef.onSnapshot(snapshot => {
-//         const messages = snapshot.docs.map(doc => {
-//           const data = doc.data();
-//           return {
-//             _id: doc.id,
-//             ...data,
-//             createdAt: data.createdAt.toDate(),
-//           };
-//         });
-//         setMessages(messages.length === 0 ? [{
-//           _id: 1,
-//           text: "What life questions can I assist you with today?",
-//           createdAt: new Date(),
-//           user: {
-//             _id: 2,
-//             name: "Gita Bot",
-//             avatar: require('./assets/orange_logo.png'),
-//           },
-//         }] : messages);
-//       });
-
-//       return () => unsubscribe(); // Unsubscribe from the listener when the component unmounts
-//    };
-//     GoogleSignin.configure({
-//       webClientId: '816437624261-kegltatut9d6jv9sb6me72r80338un7f.apps.googleusercontent.com',
-//     });
-
-//     const init = async () => {
-//       if (auth().currentUser) {
-//         await loadMessages();
-//       }
-//     };
-//     init().finally(async () => {
-//       await BootSplash.hide({ fade: true });
-//       console.log('BootSplash has been hidden successfully');
-//     });
-//   }, []);
-
-//   const sendMessage = async () => {
-//     const trimmedMessage = inputMessage.trim();
-//     if (!trimmedMessage) {
-//       console.log('Cannot send empty message.');
-//       return;
-//     }
-//     setIsLoading(true);
-//     const userId = auth().currentUser.uid;
-//     const message = {
-//       _id: Math.random().toString(36).substring(7),
-//       text: inputMessage,
-//       createdAt: new Date(),
-//       user: { _id: 1, name: 'User'},
-//     };
-//     setMessages(previousMessages => GiftedChat.append(previousMessages, [message]));
-//     setInputMessage('');
-//     setShowSuggestions(false);
-
-//     try {
-//       const response = await fetch('https://gita-chat-beta2.azurewebsites.net/api/gita_assistant_v1', {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ prompt: inputMessage }),
-//       });
-//       const data = await response.json();
-//       const botMessage = {
-//         _id: Math.random().toString(36).substring(7),
-//         text: data.trim(),
-//         createdAt: new Date(),
-//         user: { _id: 2, name: 'Bot', avatar: require('./assets/orange_logo.png') },
-//       };
-//       setMessages(previousMessages => GiftedChat.append(previousMessages, [botMessage]));
-
-//       // Save messages to Firestore
-//       const userMessagesRef = firestore().collection('users').doc(userId).collection('messages');
-//       await userMessagesRef.add(message);
-//       await userMessagesRef.add(botMessage);
-
-//       const regex = /Chapter \d+, Verse \d+/g;
-//       const found = data.match(regex) || [];
-//       setChapterVerses(found);
-
-//       await fetch('https://getgitadata.azurewebsites.net/api/storeDataDB?', {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({
-//           user_message: inputMessage,
-//           bot_response: botMessage.text
-//         }),
-//       });
-//     } catch (error) {
-//       console.error('Error fetching data: ', error);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image, Alert } from 'react-native';
-import { GiftedChat, Time, Bubble } from 'react-native-gifted-chat';
+import { GiftedChat, Time, Day, Bubble } from 'react-native-gifted-chat';
 import BootSplash from 'react-native-bootsplash';
 import { useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
@@ -137,21 +15,21 @@ export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [chapterVerses, setChapterVerses] = useState([]);
 
-  const loadMessages = async () => {
+  const loadMessages = () => {
     const userId = auth().currentUser?.uid;
     if (!userId) {
       console.log('No user logged in');
+      setMessages([]); // Clear messages when no user is logged in
       return;
     }
-
+  
     const userMessagesRef = firestore()
       .collection('users')
       .doc(userId)
       .collection('messages')
       .orderBy('createdAt', 'desc');
   
-    try {
-      const snapshot = await userMessagesRef.get();
+    const unsubscribe = userMessagesRef.onSnapshot(snapshot => {
       if (snapshot.empty) {
         setMessages([{
           _id: 1,
@@ -175,21 +53,34 @@ export default function HomeScreen() {
         });
         setMessages(fetchedMessages);
       }
-    } catch (error) {
+    }, error => {
       console.error("Error loading messages: ", error);
-    }
+      Alert.alert("Error loading messages", error.message);
+    });
+  
+    return unsubscribe; // Return the unsubscribe function
   };
   
+  
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(user => {
+    let unsubscribe;
+    const authUnsubscribe = auth().onAuthStateChanged(user => {
       if (user) {
-        loadMessages();
+        unsubscribe = loadMessages();
       } else {
         setMessages([]);
+        if (unsubscribe) {
+          unsubscribe();
+        }
       }
     });
-
-    return () => unsubscribe();
+  
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+      authUnsubscribe();
+    };
   }, []);
   
   
@@ -321,11 +212,17 @@ export default function HomeScreen() {
             {...timeProps}
             timeTextStyle={{
               left: { color: '#000' },
-              right: { color: '#000' }
+              right: { color: '#fff' }
             }}
           />
         )}
-        renderDay={() => null}
+        // renderDay={() => null}
+        // renderDay={(props) => (
+        //   <Day
+        //     {...props}
+        //     textStyle={{ color: '#f9f9f9' }} 
+        //   />
+        // )}
       />
       {showSuggestions && (
         <View style={styles.suggestionsContainer}>
@@ -431,7 +328,7 @@ const styles = StyleSheet.create({
     marginBottom: '5px',
   },
   userMessageText: {
-    color: '#000',
+    color: '#fff',
   },
   inputContainer: {
     flexDirection: 'row',

@@ -4,7 +4,7 @@ import BootSplash from "react-native-bootsplash";
 import auth from '@react-native-firebase/auth';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = () => {
   useEffect(() => {
     const init = async () => {
       try {
@@ -40,19 +40,18 @@ const LoginScreen = ({ navigation }) => {
       console.log("Google Play Services is available");
   
       // Attempt to sign in
-      const { idToken, user } = await GoogleSignin.signIn();
-      console.log("Google Sign-In successful", user);
+      const { idToken } = await GoogleSignin.signIn();
+      console.log("Google Sign-In successful");
   
       // Create a credential
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
       console.log("Google credential created");
   
       // Sign in to Firebase
-      const userCredential = await auth().signInWithCredential(googleCredential);
-      console.log("Firebase sign-in successful", userCredential.user.displayName);
+      await auth().signInWithCredential(googleCredential);
+      console.log("Firebase sign-in successful");
   
-      // Navigate to Home screen
-      navigation.replace('Home');
+      // No need to navigate here, App.js will handle it
     } catch (error) {
       console.error("Google Sign-In error:", error);
       console.error("Error code:", error.code);

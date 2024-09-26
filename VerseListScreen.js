@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginVertical: 20,
+    color: '#ff881a'
   },
   verseItem: {
     backgroundColor: '#FFFFFF',
@@ -69,6 +70,8 @@ const styles = StyleSheet.create({
   },
   verseTitle: {
     fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ff881a'
   },
 });
 

@@ -109,15 +109,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   yellow_text:{
-    color: '#ffcc00'
+    color: '#ffcc00',
+    textAlign: 'center'
   },
   yellow_box:{
     borderWidth: 1,
     borderColor: '#ffcc00',
     borderRadius: 20,
-    paddingHorizontal: 100,
+    // paddingHorizontal: 100,
     paddingVertical: 10,
     margin: 20,
+    width: '90%'
   },
   blue_box: {
     borderWidth: 1,

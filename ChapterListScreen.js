@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginVertical: 20,
+    color: '#ff881a'
   },
   chapterItem: {
     backgroundColor: '#FFFFFF',
@@ -62,6 +63,7 @@ const styles = StyleSheet.create({
   chapterTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#ff881a'
   },
 });
 
